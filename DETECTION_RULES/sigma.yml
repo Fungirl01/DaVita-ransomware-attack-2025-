@@ -1,0 +1,65 @@
+title: Suspicious RDP/Interactive Login From New Location
+id: 1e7f9f8a-0001-4a2b-8d2f-111111111111
+status: experimental
+description: Detects interactive logins (RDP/console) from geographic locations or IPs not previously seen for the account or from TOR/VPN providers.
+author: Security Team
+logsource:
+  product: windows
+  service: security
+detection:
+  selection:
+    EventID: 4624
+    LogonType: 10
+  condition: selection and (geo_unusual or ip_reputation)
+  fields:
+    - Account_Name
+    - IpAddress
+  falsepositives:
+    - Users who travel frequently or work remote from new locations
+  level: high
+
+---
+
+title: Unusual Large Data Transfer From File Server
+id: 1e7f9f8a-0002-4a2b-8d2f-222222222222
+status: experimental
+description: Detects unusually large outbound data transfers from internal file servers to external hosts or cloud storage that may indicate exfiltration.
+author: Security Team
+logsource:
+  product: network
+detection:
+  selection:
+    direction: outbound
+    source_role: file_server
+    bytes_out: ">=100000000"
+  condition: selection
+  fields:
+    - source_ip
+    - dest_ip
+    - bytes_out
+  falsepositives:
+    - Legitimate large backups or cloud sync operations
+  level: critical
+
+---
+
+title: Mass File Rename / Possible Encryption Activity
+id: 1e7f9f8a-0003-4a2b-8d2f-333333333333
+status: experimental
+author: Security Team
+description: Detects rapid file rename or extension change activity across many files which is indicative of ransomware encryption.
+logsource:
+  product: windows
+  service: sysmon
+  category: process_creation
+detection:
+  selection:
+    EventID: 11
+    TargetFilename|contains:
+      - ".encrypt"
+      - ".locked"
+      - ".crypt"
+  condition: selection
+  level: high
+  falsepositives:
+    - Bulk legitimate file transformations performed by admins
